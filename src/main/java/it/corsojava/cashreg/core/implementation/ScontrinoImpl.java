@@ -1,10 +1,5 @@
 package it.corsojava.cashreg.core.implementation;
 
-import it.corsojava.cashreg.core.Riga;
-import it.corsojava.cashreg.core.Scontrino;
-import it.corsojava.cashreg.core.StatoScontrino;
-import it.corsojava.cashreg.core.TipiScontrino;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -12,54 +7,98 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+import it.corsojava.cashreg.core.Riga;
+import it.corsojava.cashreg.core.Scontrino;
+import it.corsojava.cashreg.core.StatoScontrino;
+import it.corsojava.cashreg.core.TipiScontrino;
+
+@Entity
+@Table(name="scontrini")
 public class ScontrinoImpl implements Scontrino {
 
-    private String id;
+	@Id
+	@Column(name="id")
+	@GeneratedValue (strategy = GenerationType.IDENTITY)
+	private int idScontrino;
+	
     private String intestazione;
     private String pieDiPagina;
     private LocalDate data;
     private LocalTime ora;
-    private TipiScontrino tipo;
-    private StatoScontrino stato;
-    Set<Riga> righe;
+    
+    private String tipoScontrino;
+    private String statoScontrino;
+        
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "idScontrino")
+    Set<RigaImpl> righe;
 
     protected ScontrinoImpl(){
-        id=null;
-        tipo=TipiScontrino.VENDITA;
+        tipoScontrino=TipiScontrino.VENDITA.toString();
         intestazione="";
         pieDiPagina="";
         data=LocalDate.now();
         ora=LocalTime.now();
-        righe = new HashSet<Riga>();
+        righe = new HashSet<RigaImpl>();
     }
 
     @Override
     public String getId() {
-        return this.id;
+        return this.idScontrino+"";
     }
 
     protected void setId(String id){
-        this.id=id;
+        try {
+        	this.idScontrino=Integer.parseInt(id);
+        }catch(IllegalArgumentException iea) {
+        	iea.printStackTrace();
+        }
     }
+    
+    public String getTipoScontrino() {
+		return tipoScontrino;
+	}
 
-    @Override
+	public void setTipoScontrino(String tipoScontrino) {
+		this.tipoScontrino = tipoScontrino;
+	}
+
+	public String getStatoScontrino() {
+		return statoScontrino;
+	}
+
+	public void setStatoScontrino(String statoScontrino) {
+		this.statoScontrino = statoScontrino;
+	}
+
+	@Override
     public TipiScontrino getTipo() {
-        return this.tipo;
+		return TipiScontrino.valueOf(this.tipoScontrino);
     }
 
     @Override
     public void setTipo(TipiScontrino tipo) {
-        this.tipo=tipo;
+        this.tipoScontrino=tipo.toString();
     }
 
     @Override
     public StatoScontrino getStato() {
-        return this.stato;
+        return StatoScontrino.valueOf(this.statoScontrino);
     }
 
     @Override
     public void setStato(StatoScontrino stato) {
-        this.stato=stato;
+        this.statoScontrino=stato.toString();
     }
 
     @Override
@@ -104,12 +143,17 @@ public class ScontrinoImpl implements Scontrino {
 
     @Override
     public Set<Riga> getRighe() {
-        return righe;
+    	Set<Riga> result=new HashSet<Riga>();
+    	this.righe.forEach(r -> result.add(r));
+        return result;
     }
 
     @Override
     public void setRighe(Set<Riga> righe) {
-        this.righe = righe;
+        this.righe = new HashSet<RigaImpl>();
+        righe.forEach(r -> {
+        	righe.add((RigaImpl)r);
+        });
     }
 
     @Override
@@ -124,20 +168,20 @@ public class ScontrinoImpl implements Scontrino {
     @Override
     public Riga creaNuovaRiga() {
         Riga r = new RigaImpl();
-        this.righe.add(r);
+        this.righe.add((RigaImpl)r);
         return r;
     }
 
     @Override
     public String toString() {
         StringBuilder sb=new StringBuilder();
-        sb      .append(id)
+        sb      .append(idScontrino)
                 .append(" - ")
                 .append(getData())
                 .append(" - ")
                 .append(getOra())
                 .append(" - ")
-                .append(tipo)
+                .append(tipoScontrino)
                 .append(" ")
                 .append(getTotaleComplessivo());
         return sb.toString();
@@ -145,7 +189,7 @@ public class ScontrinoImpl implements Scontrino {
 
     public Properties toProperties(){
         Properties sProp=new Properties();
-        sProp.setProperty("id",id!=null?id:"");
+        sProp.setProperty("id",getId()!=null? getId() :"");
         sProp.setProperty("data", data!=null ?data.format(DateTimeFormatter.ISO_LOCAL_DATE):"");
         sProp.setProperty("ora", ora!=null ? ora.format(DateTimeFormatter.ISO_LOCAL_TIME):"");
         sProp.setProperty("intestazione",intestazione!=null?intestazione:"");
@@ -159,7 +203,7 @@ public class ScontrinoImpl implements Scontrino {
         if(p!=null){
             try {
                 ScontrinoImpl s = new ScontrinoImpl();
-                s.id = p.getProperty("id");
+                s.setId(p.getProperty("id"));
                 s.setData(LocalDate.parse(p.getProperty("data"), DateTimeFormatter.ISO_LOCAL_DATE));
                 s.setOra(LocalTime.parse(p.getProperty("ora"), DateTimeFormatter.ISO_LOCAL_TIME));
                 s.setIntestazione(p.getProperty("intestazione"));

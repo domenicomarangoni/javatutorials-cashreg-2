@@ -1,24 +1,68 @@
 package it.corsojava.cashreg.core.implementation;
 
+import java.util.Properties;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
 import it.corsojava.cashreg.core.Riga;
+import it.corsojava.cashreg.core.datatypes.base.PercOutOfRangeException;
 import it.corsojava.cashreg.core.datatypes.specifici.Iva;
 import it.corsojava.cashreg.core.datatypes.specifici.Sconto;
 
-import java.util.Properties;
-
+@Entity
+@Table(name="righe")
 public class RigaImpl implements Riga {
 
+	@Id
+	@Column(name="idRiga")
+	@GeneratedValue (strategy = GenerationType.IDENTITY)
+	private int idRiga;
+	
     private double prezzoUnitario;
-    private Sconto sconto;
-    private Iva iva;
+
     private double quantita;
     private String descrizione;
-
+    
+    private double scontoValue;
+    private String ivaValue;
+    
     protected RigaImpl(){
 
     }
+    
+    public int getIdRiga() {
+		return idRiga;
+	}
 
-    @Override
+	public void setIdRiga(int idRiga) {
+		this.idRiga = idRiga;
+	}
+
+	public double getScontoValue() {
+		return scontoValue;
+	}
+
+	public void setScontoValue(double scontoValue) {
+		this.scontoValue = scontoValue;
+	}
+
+	public String getIvaValue() {
+		return ivaValue;
+	}
+
+
+	public void setIvaValue(String ivaValue) {
+		this.ivaValue = ivaValue;
+	}
+
+
+
+	@Override
     public void setPrezzoUnitario(double prezzoUnitario){
         this.prezzoUnitario=prezzoUnitario;
     }
@@ -28,19 +72,23 @@ public class RigaImpl implements Riga {
     }
     @Override
     public void setSconto(Sconto sconto){
-        this.sconto=sconto;
+    	this.scontoValue=sconto.getValue();
     }
     @Override
     public Sconto getSconto(){
-        return this.sconto;
+        try {
+			return new Sconto(this.scontoValue);
+		} catch (PercOutOfRangeException e) {
+			return null;
+		}
     }
     @Override
     public void setIva(Iva iva){
-        this.iva=iva;
+    	this.ivaValue=iva.toString();
     }
     @Override
     public Iva getIva(){
-        return this.iva;
+        return Iva.valueOf(this.ivaValue);
     }
     @Override
     public void setQuantita(double quantita){
@@ -63,11 +111,11 @@ public class RigaImpl implements Riga {
     public double getPrezzoTotale() {
         double temp=0.0;
         temp=prezzoUnitario * quantita;
-        if(this.sconto !=null){
-            temp -= this.sconto.calcolaValore(temp);
+        if(this.getSconto() !=null){
+            temp -= this.getSconto().calcolaValore(temp);
         }
-        if(this.iva!=null){
-            temp += this.iva.calcolaValore(temp);
+        if(this.getIva()!=null){
+            temp += this.getIva().calcolaValore(temp);
         }
         return temp;
     }
@@ -79,7 +127,7 @@ public class RigaImpl implements Riga {
         sb.append(" X ");
         sb.append(prezzoUnitario);
         sb.append(" - ");
-        sb.append(sconto != null ? getSconto().getValue() : 0);
+        sb.append(getSconto() != null ? getSconto().getValue() : 0);
         sb.append("% ");
         if(getIva()!=Iva.IVA_0){
             sb.append(" + ");
@@ -96,8 +144,8 @@ public class RigaImpl implements Riga {
         rProp.setProperty("descrizione",descrizione!=null ? descrizione : "");
         rProp.setProperty("prezzoUnitario",prezzoUnitario+"");
         rProp.setProperty("quantita", quantita+"");
-        rProp.setProperty("sconto", sconto != null ? sconto.getValue()+"" : "0.0");
-        rProp.setProperty("iva",iva+"");
+        rProp.setProperty("sconto", getSconto() != null ? getSconto().getValue()+"" : "0.0");
+        rProp.setProperty("iva",getIva()+"");
         return rProp;
     }
 

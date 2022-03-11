@@ -5,7 +5,13 @@ import it.corsojava.cashreg.core.exceptions.RegistratoreLoadException;
 import it.corsojava.cashreg.core.implementation.RegistratoreScontriniImpl;
 import it.corsojava.cashreg.core.implementation.StoreEngine;
 import it.corsojava.cashreg.core.implementation.exceptions.StoreEngineException;
-import it.corsojava.cashreg.ui.*;
+import it.corsojava.cashreg.core.implementation.storeengine.StoreEngineImpl;
+import it.corsojava.cashreg.ui.ScontrinoBasicPrinter;
+import it.corsojava.cashreg.ui.ScontrinoPrinter;
+import it.corsojava.cashreg.ui.TerminalStdFormats;
+import it.corsojava.cashreg.ui.TerminalUi;
+import it.corsojava.cashreg.ui.TerminalUiAgent;
+import it.corsojava.cashreg.ui.UiAgentStartupException;
 
 public class Main {
     public static void main(String[] args) {
@@ -18,7 +24,7 @@ public class Main {
         // JPA, Hibernate, etc, a scelta dello sviluppatore. Potranno anche essere adottate soluzioni 
         // basate su NoSQL databases o altre forme di persistenza
 
-        StoreEngine engine = null;
+        StoreEngine engine = new StoreEngineImpl();
 
         RegistratoreScontrini registratore = null;
         try {
