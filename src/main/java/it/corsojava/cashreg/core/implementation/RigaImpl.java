@@ -1,7 +1,5 @@
 package it.corsojava.cashreg.core.implementation;
 
-import java.util.Properties;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -9,8 +7,9 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Type;
+
 import it.corsojava.cashreg.core.Riga;
-import it.corsojava.cashreg.core.datatypes.base.PercOutOfRangeException;
 import it.corsojava.cashreg.core.datatypes.specifici.Iva;
 import it.corsojava.cashreg.core.datatypes.specifici.Sconto;
 
@@ -28,8 +27,13 @@ public class RigaImpl implements Riga {
     private double quantita;
     private String descrizione;
     
-    private double scontoValue;
-    private String ivaValue;
+    @Column(name="sconto")
+    @Type(type = "it.corsojava.cashreg.core.implementation.storeengine.ScontoUserType")
+    private Sconto sconto;
+    
+    @Column(name="iva")
+    @Type(type = "it.corsojava.cashreg.core.implementation.storeengine.IvaUserType")
+    private Iva iva;
     
     protected RigaImpl(){
 
@@ -43,25 +47,6 @@ public class RigaImpl implements Riga {
 		this.idRiga = idRiga;
 	}
 
-	public double getScontoValue() {
-		return scontoValue;
-	}
-
-	public void setScontoValue(double scontoValue) {
-		this.scontoValue = scontoValue;
-	}
-
-	public String getIvaValue() {
-		return ivaValue;
-	}
-
-
-	public void setIvaValue(String ivaValue) {
-		this.ivaValue = ivaValue;
-	}
-
-
-
 	@Override
     public void setPrezzoUnitario(double prezzoUnitario){
         this.prezzoUnitario=prezzoUnitario;
@@ -72,23 +57,20 @@ public class RigaImpl implements Riga {
     }
     @Override
     public void setSconto(Sconto sconto){
-    	this.scontoValue=sconto.getValue();
+    	this.sconto=sconto;
     }
     @Override
     public Sconto getSconto(){
-        try {
-			return new Sconto(this.scontoValue);
-		} catch (PercOutOfRangeException e) {
-			return null;
-		}
+    	return this.sconto;
     }
+    
     @Override
     public void setIva(Iva iva){
-    	this.ivaValue=iva.toString();
+    	this.iva=iva;
     }
     @Override
     public Iva getIva(){
-        return Iva.valueOf(this.ivaValue);
+        return this.iva;
     }
     @Override
     public void setQuantita(double quantita){
@@ -138,33 +120,4 @@ public class RigaImpl implements Riga {
         sb.append(getPrezzoTotale());
         return sb.toString();
     }
-
-    public Properties toProperties(){
-        Properties rProp=new Properties();
-        rProp.setProperty("descrizione",descrizione!=null ? descrizione : "");
-        rProp.setProperty("prezzoUnitario",prezzoUnitario+"");
-        rProp.setProperty("quantita", quantita+"");
-        rProp.setProperty("sconto", getSconto() != null ? getSconto().getValue()+"" : "0.0");
-        rProp.setProperty("iva",getIva()+"");
-        return rProp;
-    }
-
-    public static Riga fromProperties(Properties p) {
-        if(p!=null){
-            try {
-                RigaImpl r = new RigaImpl();
-                r.setPrezzoUnitario(Double.parseDouble(p.getProperty("prezzoUnitario")));
-                r.setQuantita(Double.parseDouble(p.getProperty("quantita")));
-                r.setSconto(new Sconto(Double.parseDouble(p.getProperty("sconto"))));
-                r.setIva(Iva.valueOf(p.getProperty("iva")));
-                r.setDescrizione(p.getProperty("descrizione"));
-                return r;
-            }catch (Exception ex){
-                throw new UnsupportedOperationException("Unable to convert properties to instance",ex);
-            }
-        }else throw new IllegalArgumentException();
-    }
-
-
-
 }

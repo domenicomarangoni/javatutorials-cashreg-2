@@ -17,6 +17,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Type;
+
 import it.corsojava.cashreg.core.Riga;
 import it.corsojava.cashreg.core.Scontrino;
 import it.corsojava.cashreg.core.StatoScontrino;
@@ -36,20 +38,26 @@ public class ScontrinoImpl implements Scontrino {
     private LocalDate data;
     private LocalTime ora;
     
-    private String tipoScontrino;
-    private String statoScontrino;
+    @Column(name="tipo")
+    @Type(type = "it.corsojava.cashreg.core.implementation.storeengine.TipoScontrinoUserType")
+    private TipiScontrino tipo;
+    
+    @Column(name="stato")
+    @Type(type = "it.corsojava.cashreg.core.implementation.storeengine.StatoScontrinoUserType")    
+    private StatoScontrino stato;
         
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "idScontrino")
     Set<RigaImpl> righe;
 
     protected ScontrinoImpl(){
-        tipoScontrino=TipiScontrino.VENDITA.toString();
+        tipo=TipiScontrino.VENDITA;
         intestazione="";
         pieDiPagina="";
         data=LocalDate.now();
         ora=LocalTime.now();
         righe = new HashSet<RigaImpl>();
+        stato= StatoScontrino.NUOVO;
     }
 
     @Override
@@ -65,40 +73,24 @@ public class ScontrinoImpl implements Scontrino {
         }
     }
     
-    public String getTipoScontrino() {
-		return tipoScontrino;
-	}
-
-	public void setTipoScontrino(String tipoScontrino) {
-		this.tipoScontrino = tipoScontrino;
-	}
-
-	public String getStatoScontrino() {
-		return statoScontrino;
-	}
-
-	public void setStatoScontrino(String statoScontrino) {
-		this.statoScontrino = statoScontrino;
-	}
-
 	@Override
     public TipiScontrino getTipo() {
-		return TipiScontrino.valueOf(this.tipoScontrino);
+		return this.tipo;
     }
 
     @Override
     public void setTipo(TipiScontrino tipo) {
-        this.tipoScontrino=tipo.toString();
+        this.tipo=tipo;
     }
 
     @Override
     public StatoScontrino getStato() {
-        return StatoScontrino.valueOf(this.statoScontrino);
+        return this.stato;
     }
 
     @Override
     public void setStato(StatoScontrino stato) {
-        this.statoScontrino=stato.toString();
+        this.stato=stato;
     }
 
     @Override
@@ -181,41 +173,9 @@ public class ScontrinoImpl implements Scontrino {
                 .append(" - ")
                 .append(getOra())
                 .append(" - ")
-                .append(tipoScontrino)
+                .append(tipo.toString())
                 .append(" ")
                 .append(getTotaleComplessivo());
         return sb.toString();
     }
-
-    public Properties toProperties(){
-        Properties sProp=new Properties();
-        sProp.setProperty("id",getId()!=null? getId() :"");
-        sProp.setProperty("data", data!=null ?data.format(DateTimeFormatter.ISO_LOCAL_DATE):"");
-        sProp.setProperty("ora", ora!=null ? ora.format(DateTimeFormatter.ISO_LOCAL_TIME):"");
-        sProp.setProperty("intestazione",intestazione!=null?intestazione:"");
-        sProp.setProperty("pieDiPagaina",pieDiPagina!=null ? pieDiPagina : "");
-        sProp.setProperty("stato",""+getStato());
-        sProp.setProperty("tipo",""+getTipo());
-        return sProp;
-    }
-
-    public static Scontrino fromProperties(Properties p) {
-        if(p!=null){
-            try {
-                ScontrinoImpl s = new ScontrinoImpl();
-                s.setId(p.getProperty("id"));
-                s.setData(LocalDate.parse(p.getProperty("data"), DateTimeFormatter.ISO_LOCAL_DATE));
-                s.setOra(LocalTime.parse(p.getProperty("ora"), DateTimeFormatter.ISO_LOCAL_TIME));
-                s.setIntestazione(p.getProperty("intestazione"));
-                s.setPieDiPagina(p.getProperty("pieDiPagaina"));
-                s.setStato(StatoScontrino.valueOf(p.getProperty("stato")));
-                s.setTipo(TipiScontrino.valueOf(p.getProperty("tipo")));
-                return s;
-            }catch (Exception ex){
-                throw new UnsupportedOperationException("Unable to convert properties to instance",ex);
-            }
-        }else throw new IllegalArgumentException();
-    }
-
-
 }
