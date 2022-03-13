@@ -1,2 +1,5 @@
 # javatutorials-cashreg-2
-An incomplete application: all the persistant layer is missing and it should be implemented. It's a training app
+
+This project is the step 2 of the javatutorials-cashreg-1 project.
+
+In this step only the persistance layer is missing and the project can be used like a gym to test different persistance solutions
